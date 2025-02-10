@@ -167,3 +167,67 @@ function deleteAllLogs() {
         displayLogs();
     }
 }
+function saveLog() {
+    const text = document.getElementById("logText").value;
+    const images = document.getElementById("logImages").files;
+    const logs = JSON.parse(localStorage.getItem("logs")) || [];
+
+    if (!text.trim() && images.length === 0) {
+        alert("Log cannot be empty!");
+        return;
+    }
+
+    const imageArray = [];
+    let imagesProcessed = 0;
+
+    if (images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+            const reader = new FileReader();
+            reader.readAsDataURL(images[i]);
+
+            reader.onload = function () {
+                imageArray.push(reader.result);
+                imagesProcessed++;
+
+                if (imagesProcessed === images.length) {
+                    addLog(text, imageArray, logs);
+                }
+            };
+        }
+    } else {
+        addLog(text, imageArray, logs);
+    }
+}
+
+function addLog(text, images, logs) {
+    const newLog = {
+        id: Date.now(),
+        text: text,
+        date: new Date().toLocaleString(),
+        images: images
+    };
+
+    logs.push(newLog);
+    localStorage.setItem("logs", JSON.stringify(logs));
+    alert("Log saved!");
+    window.location.href = "logs.html";
+}
+function displayLogs() {
+    const logs = JSON.parse(localStorage.getItem("logs")) || [];
+    const logContainer = document.getElementById("logContainer");
+    logContainer.innerHTML = "";
+
+    logs.forEach(log => {
+        const logElement = document.createElement("div");
+        logElement.className = "log-item";
+        logElement.innerHTML = `
+            <p>${log.text}</p>
+            <p>${log.date}</p>
+            <div class="image-container">
+                ${log.images.map(img => `<img src="${img}" class="log-image">`).join("")}
+            </div>
+            <button class="delete-btn" onclick="deleteLog(${log.id})">Delete This Log</button>
+        `;
+        logContainer.appendChild(logElement);
+    });
+}
